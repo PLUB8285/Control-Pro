@@ -158,7 +158,10 @@
                 <div class="swatch swatch-sq" id="disp_PAL4" style="background: #0000FF;" onclick="openPopup('detailed', 'PAL4')"></div>
                 <div class="swatch swatch-sq" id="disp_PAL5" style="background: #8000FF;" onclick="openPopup('detailed', 'PAL5')"></div>
             </div>
-            <button class="main-btn btn-green" id="applyPalBtn">ใช้ 5 สีนี้</button>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button class="main-btn btn-green" id="applyPalBtn" style="flex: 1; margin: 0; font-size: 14px; padding: 12px;">✅ ใช้ไฟนิ่ง</button>
+                <button class="main-btn btn-blue" style="flex: 1.2; margin: 0; font-size: 14px; padding: 12px;" onclick="openPopup('gallery', 'PAL_MODE')">✨ เลือกไฟวิ่ง (30 แบบ)</button>
+            </div>
         </div>
     </div>
 
@@ -200,8 +203,19 @@
     <script>
         let ble; let targetCmd = '';
         const S_UUID = '19b10000-e8f2-537e-4f6c-d104768a1214', C_UUID = '19b10001-e8f2-537e-4f6c-d104768a1214';
+        
         const modes = ["🌈 สเปกตรัมรุ้ง", "🔥 ภูเขาไฟระเบิด", "❄️ น้ำแข็งขั้วโลก", "🌊 คลื่นมหาสมุทร", "🌲 ป่าสนเขียว", "🦄 ยูนิคอร์นพาสเทล", "⚡ สายฟ้าฟาด", "🎆 พลุดอกไม้ไฟ", "🚔 ไซเรนตำรวจ", "🏮 เทศกาลโคมไฟ", "🏜️ ทะเลทรายส้ม", "👾 ไไซเบอร์พังก์", "🍬 ลูกกวาดหวาน", "🌑 จันทรุปราคา", "🌅 อาทิตย์อัสดง", "🌃 เมืองยามค่ำ", "🍃 ใบไม้ผลิ", "🍓 เบอร์รี่รวม", "🍋 มะนาวโซดา", "🍇 องุ่นม่วง", "🛸 ยานอวกาศ", "💎 เพชรระยิบ", "🌋 ลาวาไหล", "🌬️ ลมหนาว", "🐍 อสรพิษเขียว", "🧸 ตุ๊กตาชมพู", "🍫 ช็อกโกแลต", "🥊 เลือดนักสู้", "🥇 ทองพรีเมียม", "🚀 ทะยานฟ้า"];
         const welcomes = ["⚡ สายฟ้าฟาด", "🏎️ Knight Rider", "🌠 ดาวตก", "💓 Heartbeat", "🌊 คลื่นยักษ์", "☄️ อุกกาบาต", "🌀 วงล้อพายุ", "🧨 พลุไฟ", "🛸 จานบิน", "🎆 ระเบิดสี", "✨ ละอองเพชร", "🚨 ไซเรน", "💨 ลมแรง", "🌓 ข้างขึ้นข้างแรม", "🐍 อสรพิษ", "🌋 ลาวาปะทุ", "🌈 รุ้งกินน้ำ", "❄️ หิมะตก", "🔋 ชาร์จพลัง", "🚀 ทะยานสู่ฟ้า"];
+        
+        // 💡 เพิ่ม 30 โหมดวิ่ง สำหรับสีแต่งเอง
+        const palModes = [
+            "🔄 วิ่งวนลูป (ขวา)", "🔄 วิ่งวนลูป (ซ้าย)", "🏓 วิ่งไป-กลับ (Ping Pong)", "⚡ กระพริบสลับสี", "☁️ เฟดละมุน (Smooth Fade)", 
+            "🌊 คลื่นสีไหล (Wave)", "☄️ ดาวตกหางยาว", "✨ หิ่งห้อยวิบวับ", "💥 ระเบิดออกข้าง", "🗜️ บีบเข้ากลาง", 
+            "🌀 เกลียวพายุ", "🚨 กระพริบรัว (Strobe)", "🏃 วิ่งไล่จับ (Chase)", "🥞 วิ่งซ้อนทับ", "🎲 กระโดดสุ่มสี", 
+            "🌌 ละอองดาว", "🫁 หายใจ (Breathing)", "💓 ชีพจรหัวใจ", "🌋 ลาวาปะทุ", "🚔 แฟลชตำรวจคู่", 
+            "🏮 ไซเรนสลับสี", "🧱 บล็อกหล่น (Tetris)", "〰️ สลับฟันปลา", "💧 สายน้ำไหลริน", "💥 วิ่งชนแล้วเด้งกลับ", 
+            "💓 คลื่นพัลส์คู่", "🔦 ลำแสงเลเซอร์", "🧹 วิ่งกวาดซ้ายขวา", "⏪ ย้อนรอยสี", "🌪️ พายุไซโคลน"
+        ];
 
         document.getElementById('connectBtn').onclick = async function() {
             try {
@@ -224,14 +238,37 @@
             const id = (type==='swatch')?'popSwatch':((type==='gallery')?'popGallery':'popDetailed');
             if(type==='gallery') {
                 const list = document.getElementById('modeList'); list.innerHTML = '';
-                const data = (cmd==='MODE')?modes:welcomes;
-                document.getElementById('galleryTitle').innerText = (cmd==='MODE')?'เลือกโหมดสำเร็จรูป':'เลือกแอนิเมชันต้อนรับ';
+                let data = [];
+                let titleStr = '';
+                
+                // 💡 แยกว่าปุ่มไหนดึงชุดข้อมูลไหนมาแสดง
+                if(cmd==='MODE') { data = modes; titleStr = 'เลือกโหมดสำเร็จรูป'; }
+                else if(cmd==='WEL_MODE') { data = welcomes; titleStr = 'เลือกแอนิเมชันต้อนรับ'; }
+                else if(cmd==='PAL_MODE') { data = palModes; titleStr = '✨ เลือกสเต็ปไฟวิ่ง (5 สี)'; }
+
+                document.getElementById('galleryTitle').innerText = titleStr;
                 data.forEach((m, i) => {
                     let div = document.createElement('div'); div.className = 'mode-item'; div.innerText = m;
                     div.onclick = () => {
-                        send(`${cmd}:${i+1}`);
-                        if(cmd==='MODE') { document.getElementById('modeDisplay').innerText = `📌 โหมดปัจจุบัน: ${m}`; resetPaletteBtn(); }
-                        else { document.getElementById('welcomeDisplay').innerText = `🎁 แอนิเมชัน: ${m}`; }
+                        if(cmd==='MODE') { 
+                            send(`${cmd}:${i+1}`);
+                            document.getElementById('modeDisplay').innerText = `📌 โหมดปัจจุบัน: ${m}`; 
+                            resetPaletteBtn(); 
+                        }
+                        else if(cmd==='WEL_MODE') { 
+                            send(`${cmd}:${i+1}`);
+                            document.getElementById('welcomeDisplay').innerText = `🎁 แอนิเมชัน: ${m}`; 
+                        }
+                        else if(cmd==='PAL_MODE') {
+                            // 💡 ส่งโค้ดสี 5 สีก่อน แล้วหน่วงเวลาส่งโหมดวิ่งตามไป
+                            const h = (id) => rgb2Hex(document.getElementById(id).style.background);
+                            send(`PALETTE:${h('disp_PAL1')},${h('disp_PAL2')},${h('disp_PAL3')},${h('disp_PAL4')},${h('disp_PAL5')}`);
+                            setTimeout(() => send(`PAL_MODE:${i+1}`), 150);
+                            
+                            document.getElementById('modeDisplay').innerText = `📌 5 สี (วิ่ง): ${m}`;
+                            const btn = document.getElementById('applyPalBtn');
+                            btn.classList.add('applied'); btn.innerHTML = '✅ ใช้งานแล้ว';
+                        }
                         closePopup('popGallery');
                     };
                     list.appendChild(div);
@@ -251,10 +288,13 @@
             else send(`${targetCmd}:${hex}`);
         }
 
+        // 💡 ปุ่มสำหรับใช้ไฟนิ่ง (บังคับ PAL_MODE:0)
         document.getElementById('applyPalBtn').onclick = function() {
             const h = (id) => rgb2Hex(document.getElementById(id).style.background);
             send(`PALETTE:${h('disp_PAL1')},${h('disp_PAL2')},${h('disp_PAL3')},${h('disp_PAL4')},${h('disp_PAL5')}`);
-            document.getElementById('modeDisplay').innerText = `🎨 กำหนด 5 สีเอง`;
+            setTimeout(() => send('PAL_MODE:0'), 150);
+            
+            document.getElementById('modeDisplay').innerText = `📌 5 สี (แบบไฟนิ่ง)`;
             this.classList.add('applied'); this.innerHTML = '✅ ใช้งานแล้ว';
         };
 
@@ -263,21 +303,19 @@
             for(let i=1; i<=5; i++) document.getElementById('disp_PAL'+i).style.background = def[i-1];
             resetPaletteBtn();
         }
-        function resetPaletteBtn() { const b = document.getElementById('applyPalBtn'); b.classList.remove('applied'); b.innerHTML = 'ใช้ 5 สีนี้'; }
+        function resetPaletteBtn() { 
+            const b = document.getElementById('applyPalBtn'); 
+            b.classList.remove('applied'); b.innerHTML = '✅ ใช้ไฟนิ่ง'; 
+        }
 
         // Color Math & Event Listeners
         const slH = document.getElementById('s_hue'), slS = document.getElementById('s_sat'), slB = document.getElementById('s_bri'), hexInp = document.getElementById('hexInp');
         [slH, slS, slB].forEach(el => el.oninput = updateSliders);
 
-        // 💡 เพิ่มระบบตรวจจับตอนพิมพ์โค้ดสี Hex
         hexInp.addEventListener('input', function() {
             let val = this.value;
-            // เติม # ให้อัตโนมัติถ้าลืมพิมพ์
             if (val.length > 0 && !val.startsWith('#')) { val = '#' + val; this.value = val; }
-            // เช็กว่าพิมพ์ครบ 7 ตัว และเป็นค่าสีที่ถูกต้องไหม
-            if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
-                initDetailed(val); // ถ้าถูกต้อง ให้สไลเดอร์และกล่องสีอัปเดตตามทันที
-            }
+            if (/^#[0-9A-Fa-f]{6}$/.test(val)) { initDetailed(val); }
         });
 
         function updateSliders() {
@@ -287,7 +325,6 @@
             slB.style.background = `linear-gradient(to right, #000, ${rgb2Hex(hsv2Rgb(h,s*100,100))})`;
             const hex = rgb2Hex(hsv2Rgb(h, s*100, b*100));
             
-            // ป้องกันการกวนขณะพิมพ์
             if (document.activeElement !== hexInp) { hexInp.value = hex; }
             document.getElementById('previewBox').style.background = hex;
         }
@@ -299,7 +336,6 @@
             let max=Math.max(r,g,b), min=Math.min(r,g,b), d=max-min, h=0; 
             if(max!=min) { switch(max){ case r:h=(g-b)/d+(g<b?6:0);break; case g:h=(b-r)/d+2;break; case b:h=(r-g)/d+4;break; } h/=6; } 
             slH.value=h*360; slS.value=100; slB.value=100; updateSliders(); 
-            // อัปเดตสีกล่องตัวอย่างเมื่อพิมพ์ถูก
             document.getElementById('previewBox').style.background = hex;
         }
     </script>
