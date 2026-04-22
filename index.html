@@ -71,7 +71,7 @@
                 let dataArray = encoder.encode(commandString);
                 
                 // ลองส่งข้อมูล
-                await myCharacteristic.writeValueWithoutResponse(dataArray);
+                await myCharacteristic.writeValue(dataArray);
                 
                 // ถ้ารอดมาถึงบรรทัดนี้ แปลว่าแอปส่งผ่าน 100%
                 document.getElementById('debugLog').innerText = "✅ ส่งข้อมูลสำเร็จ: " + commandString;
