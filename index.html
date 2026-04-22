@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ZONTES PRO Controller</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: white; text-align: center; padding: 20px; margin: 0; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #121212; color: white; text-align: center; padding: 20px; }
         .card { background-color: #1e1e1e; border-radius: 15px; padding: 20px; margin-top: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        button { background: linear-gradient(45deg, #007bff, #00d2ff); border: none; color: white; padding: 15px 30px; font-size: 18px; border-radius: 30px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s; }
-        button:active { transform: scale(0.95); }
-        input[type="color"] { width: 100px; height: 100px; border: none; border-radius: 50%; cursor: pointer; outline: none; background: none; }
-        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
-        input[type="color"]::-webkit-color-swatch { border: none; border-radius: 50%; box-shadow: 0 0 10px rgba(255,255,255,0.2); }
+        button { background: linear-gradient(45deg, #007bff, #00d2ff); border: none; color: white; padding: 15px 30px; font-size: 18px; border-radius: 30px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s; margin-top: 10px; }
+        .btn-send { background: linear-gradient(45deg, #28a745, #20c997); }
+        input[type="color"] { width: 100px; height: 100px; border: none; border-radius: 50%; cursor: pointer; background: none; }
+        input[type="color"]::-webkit-color-swatch { border: 2px solid white; border-radius: 50%; }
         .status { margin-top: 15px; font-size: 14px; color: #888; }
+        .log { margin-top: 15px; font-size: 16px; color: yellow; background: #333; padding: 10px; border-radius: 8px;}
     </style>
 </head>
 <body>
@@ -24,8 +24,9 @@
 
     <div class="card">
         <h3>🎨 ไฟหรี่นิ่ง (ช่อง 1)</h3>
-        <p>เลือกสีที่ต้องการ (เปลี่ยนทันที)</p>
-        <input type="color" id="colorPicker" value="#ffffff">
+        <input type="color" id="colorPicker" value="#FF0000">
+        <button id="sendBtn" class="btn-send">👉 กดเพื่อส่งสีนี้!</button>
+        <div id="debugLog" class="log">หน้าจอรอดูสถานะการส่ง...</div>
     </div>
 
     <script>
@@ -33,7 +34,6 @@
         const characteristicUuid = "19b10001-e8f2-537e-4f6c-d104768a1214";
         let myCharacteristic;
 
-        // 💡 1. ฟังก์ชันเชื่อมต่อบลูทูธ
         document.getElementById('connectBtn').addEventListener('click', async () => {
             try {
                 document.getElementById('statusText').innerText = "กำลังค้นหา...";
@@ -49,29 +49,38 @@
                 document.getElementById('statusText').innerText = "🟢 เชื่อมต่อสำเร็จ!";
                 document.getElementById('statusText').style.color = "#00FF00";
             } catch(error) {
-                console.error(error);
                 document.getElementById('statusText').innerText = "❌ ยกเลิกการเชื่อมต่อ";
             }
         });
 
-        // 💡 2. ฟังก์ชันส่งรหัสสีไปที่ ESP32 (แก้จุดบอดให้ส่งผ่านมือถือได้ 100%)
-        document.getElementById('colorPicker').addEventListener('input', async (event) => {
-            if (!myCharacteristic) return;
+        // 💡 เปลี่ยนจาก "เปลี่ยนปุ๊บส่งปั๊บ" เป็น "กดปุ่มแล้วค่อยส่ง"
+        document.getElementById('sendBtn').addEventListener('click', async () => {
+            if (!myCharacteristic) {
+                document.getElementById('debugLog').innerText = "⚠️ ต้องเชื่อมต่อบลูทูธก่อนนะคะ!";
+                return;
+            }
             
-            // ดึงค่าสี เช่น #FF0000 และจัดรูปประโยคคำสั่ง
-            const hexColor = event.target.value.toUpperCase();
+            const hexColor = document.getElementById('colorPicker').value.toUpperCase();
             const commandString = "DRL_S:" + hexColor;
             
+            document.getElementById('debugLog').innerText = "กำลังส่ง: " + commandString + " ...";
+            document.getElementById('debugLog').style.color = "yellow";
+            
             try {
-                // 🚀 แปลงข้อความเป็นรหัสคอมพิวเตอร์ก่อนส่ง (สำคัญมาก!)
                 let encoder = new TextEncoder();
                 let dataArray = encoder.encode(commandString);
                 
-                // 🚀 ส่งข้อมูลแบบไม่รอตอบกลับ (รองรับ Android ทุกรุ่น)
+                // ลองส่งข้อมูล
                 await myCharacteristic.writeValueWithoutResponse(dataArray);
-                console.log("ส่งข้อมูลสำเร็จ:", commandString);
+                
+                // ถ้ารอดมาถึงบรรทัดนี้ แปลว่าแอปส่งผ่าน 100%
+                document.getElementById('debugLog').innerText = "✅ ส่งข้อมูลสำเร็จ: " + commandString;
+                document.getElementById('debugLog').style.color = "#00FF00";
+                
             } catch(error) {
-                console.error("ส่งข้อมูลไม่ผ่าน:", error);
+                // ถ้าแอปพัง จะโชว์ตรงนี้
+                document.getElementById('debugLog').innerText = "❌ แจ้งเตือน: " + error;
+                document.getElementById('debugLog').style.color = "red";
             }
         });
     </script>
